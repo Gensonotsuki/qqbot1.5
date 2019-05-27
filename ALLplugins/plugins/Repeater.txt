@@ -1,0 +1,57 @@
+from random import randint
+
+from nonebot import on_natural_language, NLPSession, NLPResult, on_command, CommandSession
+
+# 初始化session记录，最后一条消息，复读池，复读次数
+_last_session = None
+_repeate_wd = ''
+repeat_box = []
+repeat_time = randint(1, 2)
+
+
+# 自然语言处理器
+@on_natural_language(only_to_me=False)
+async def _(session: NLPSession):
+    if session.ctx.get('group_id') != 144126250:
+        return None
+    global _last_session, _repeate_wd, repeat_box, repeat_time
+    result = None
+    # 如果  session记录存在，
+    # 且，不是同一个人复读自己，
+    # 且，上下记录一样，
+    # 且该记录次数达到了随机复读次数后，
+    # 将这条记录返回给自然语言处理器的结果，并调用复读函数复读出去
+    if _last_session and \
+            _last_session.ctx['user_id'] != session.ctx['user_id'] and \
+            _last_session.msg == session.msg and \
+            _last_session.msg != _repeate_wd and \
+            len(repeat_box) == repeat_time:
+        result = NLPResult(100.0, 'repeat', {'message': _last_session.msg})
+        # 复读后保存该复读记录，重置复读池和复读次数
+        _repeate_wd = _last_session.msg
+        repeat_box = []
+        repeat_time = randint(1, 2)
+    # 如果  session记录存在，
+    # 且，不是同一个人复读自己，
+    # 且，上下记录一样，
+    # 且，和上次复读记录不一样
+    elif _last_session and \
+            _last_session.ctx['user_id'] != session.ctx['user_id'] and \
+            _last_session.msg == session.msg and \
+            _last_session.msg != _repeate_wd:
+        # 将该记录保存在session记录中
+        repeat_box.append(_last_session.msg)
+    else:
+        # 每次收到消息后都初始化复读池，复读次数，并将该次记录添加到复读池（万一复读了呢
+        repeat_box = []
+        _last_session = session
+        repeat_time = randint(1, 2)
+        repeat_box.append(_last_session.msg)
+    return result
+
+
+@on_command('repeat', only_to_me=False)
+async def _(session: CommandSession):
+    #从session中获取自然语言处理器的结果发送出去
+    wd = session.args['message']
+    await session.send(wd)
