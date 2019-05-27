@@ -11,12 +11,12 @@ root_pic = 'G:\火狐下载\酷Q Pro\data\image'
 save_path = root_pic + 'ColourPicture.png'
 
 
-@on_natural_language(keywords={'搜图'})
+@on_natural_language(keywords={'色图'})
 async def _(session: NLPSession):
     return IntentCommand(100, 'setu')
 
 
-@on_command('setu', only_to_me=False, aliases=('搜图'))
+@on_command('setu', only_to_me=False, aliases=('色图'))
 async def _(session: CommandSession):
     user = session.ctx['user_id']
 
@@ -32,7 +32,13 @@ async def _(session: CommandSession):
         img.write(rs.read())
         img.flush()
         img.close()
-    await session.send('se图已收到,该过程较长,请耐心等待')
+    await session.send('[CQ:emoji:id=128013]图已收到,该过程较长,请耐心等待')
+    await search_pic(pic, setu)
+    await session.send(f'[CQ:at,qq={user}]\n[CQ:image,file={pic_name}Source.png]')
+
+
+# 搜索结果并保存
+async def search_pic(pic, setu):
     opt = webdriver.ChromeOptions()
     opt.add_argument('--headless')
     opt.add_argument('--disable-gpu')
@@ -47,4 +53,3 @@ async def _(session: CommandSession):
     res = browser.find_element_by_id('middle')
     res.screenshot(setu)
     browser.quit()
-    await session.send(f'[CQ:at,qq={user}]\n[CQ:image,file={pic_name}Source.png]')

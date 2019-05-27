@@ -38,8 +38,8 @@ async def maza_chater(session: CommandSession):
     if hero_list and len(hero_list) == 4:
         rs = await get_unser(hero_list)
         if rs in er_wd:
-            session.pause(f'{rs}')
-        await session.send(rs)
+            session.pause(f'[CQ:at,qq={user}]\n{rs}')
+        await session.send(f'[CQ:at,qq={user}]\n'+rs)
     else:
         chat_menber = session.get('chat_menber', prompt='没有找到4个人,请单独列出想要聊天的4个人[CQ:face,id=13]')
         await session.send(f'[CQ:at,qq={userid}]\n'+chat_menber)
