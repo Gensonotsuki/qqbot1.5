@@ -67,6 +67,7 @@ async def get_act_title() -> str:
     title_list = ''
     No = 1
     for i in res:
+        print(i['url'])
         try:
             title_list += (str(No) + '、' + i['article_title'] + '\t' + i['up_time'] + '\n' + i['url'] + '\n')
         except:

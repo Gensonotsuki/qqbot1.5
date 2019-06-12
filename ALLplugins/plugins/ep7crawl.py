@@ -297,10 +297,11 @@ def re_news(article_id_list, local_article_id):
         all_article_title, all_article_list = e7ArticleCrawl(new_artic_id)
         all_article = []
         for i in all_article_list:
-            b = re.sub('</tr>|■|。|;|；', '\n', i)
+            b = re.sub('</tr>|■', '\n', i)
             c = re.sub('</td>|&nbsp', '\t', b)
             d = re.sub('<.*?>', '', c)
-            all_article.append(d)
+            e = re.sub('。|;|；', '\n', d)
+            all_article.append(e)
         return new_artic_id, all_article_title, all_article
     else:
         return None
