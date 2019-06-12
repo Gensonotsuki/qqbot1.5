@@ -148,7 +148,7 @@ from DataBaseLinkStart import link_local_mongo
 
 
 # 获取首页的文章响应
-def e7_mainpage_crawl(board_key='e7tw002'):
+def e7_mainpage_crawl():
     mainpage_header = {
         'Host': 'api.onstove.com',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0',
@@ -170,32 +170,34 @@ def e7_mainpage_crawl(board_key='e7tw002'):
         'Cache-Control': 'max-age=0',
         'TE': 'Trailers',
     }
-    mainpage_form_data = {"board_key": "e7tw002",
+    mainpage_form_data = {"board_key": "all",
                           "direction": "latest",
-                          "list_type": "3",
+                          "list_type": "2",
                           "display_opt": "usertag_on,html_remove",
-                          "notice_type": "A",
-
+                          "notice_type": "M",
                           "page": 1,
                           "size": 15,
                           "not_headline_nos": [],
                           "access_token": None,
                           "cafe_key": "epicseven",
-                          "channel_key": "tw"}
+                          "channel_key": "tw",
+                          "ISmAIN": True
+                          }
     print('开始获取首页文章接口')
     nocache = math.floor(time.time() * 1000)
     mainpage_url = f'https://api.onstove.com/cafe/v1/ArticleList?nocache={nocache}'
     try:
-        mainpage_form_data['board_key'] = board_key
         main_page_response = requests.post(url=mainpage_url, data=json.dumps(mainpage_form_data),
                                            headers=mainpage_header)
         artic_list = json.loads(main_page_response.text)['context']['article_list']
         print('首页文章获取结束')
         article_id_list = []
-        article_title_list = []
         for article_id in artic_list:
-            article_id_list.append(article_id['card_no'])
-            article_title_list.append(article_id['title'])
+            print('123')
+
+            if article_id['user']['nickname'] == '卡卡小編':
+                article_id_list.append(article_id['card_no'])
+            print('456')
         article_id_list.sort(reverse=True)
         article_id_list = article_id_list[:10]
         return article_id_list
@@ -270,17 +272,10 @@ def new_article(E7news_set):
         local_article_id.append(i['article_id'])
         local_article_title.append(i['article_title'])
     local_article_id = local_article_id
-    e7tw001_id_list = e7_mainpage_crawl(board_key='e7tw001')
-    e7tw002_id_list = e7_mainpage_crawl(board_key='e7tw002')
+    e7tw001_id_list = e7_mainpage_crawl()
     if e7tw001_id_list:
         try:
             new_artic_id, all_article_title, all_article = re_news(e7tw001_id_list, local_article_id)
-        except:
-            return None
-        return new_artic_id, all_article_title, all_article
-    elif e7tw002_id_list:
-        try:
-            new_artic_id, all_article_title, all_article = re_news(e7tw002_id_list, local_article_id)
         except:
             return None
         return new_artic_id, all_article_title, all_article
@@ -329,7 +324,6 @@ def push_article(E7news_set):
         latest_news = zip_article(new_artic_id, all_article_title, all_article)
         return latest_news
     print(f'{datetime.datetime.now(tz=pytz.timezone("Asia/Shanghai"))}\ne7tw002没有最新文章\n')
-    print(f'{datetime.datetime.now(tz=pytz.timezone("Asia/Shanghai"))}\ne7tw001没有最新文章\n')
     return None
 
 
