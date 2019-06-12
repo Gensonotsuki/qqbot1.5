@@ -11,7 +11,7 @@ _repeate_wd = ''
 repeat_box = []
 repeat_time = randint(1, 2)
 
-group_list = [704508525, 144126250]
+group_list = [704508525, 144126250, 615086637]
 
 
 # 自然语言处理器

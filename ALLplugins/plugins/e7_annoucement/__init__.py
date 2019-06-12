@@ -23,6 +23,17 @@ async def e7news(session: CommandSession):
     world = await get_act_title()
     wtsact = session.get('wtsact', prompt=world)
     act_text = await get_act(wtsact)
+    if len(act_text) >= 1000:
+        article_1 = act_text[:1000]
+        article_2 = act_text[1000:]
+        if len(article_2) >= 1000:
+            article_3 = article_2[:1000]
+            article_4 = article_2[1000:]
+            await session.send(article_1)
+            await session.send(article_3)
+            await session.send(article_4)
+        await session.send(article_1)
+        await session.send(article_2)
     await session.send(act_text)
     return act_text
 
@@ -57,7 +68,7 @@ async def get_act_title() -> str:
     No = 1
     for i in res:
         try:
-            title_list += (str(No) + '、' + i['article_title'] + '\t' + i['up_time'] + '\n')
+            title_list += (str(No) + '、' + i['article_title'] + '\t' + i['up_time'] + '\n' + i['url'] + '\n')
         except:
             title_list += (str(No) + '、' + i['article_title'] + '\n')
         No += 1

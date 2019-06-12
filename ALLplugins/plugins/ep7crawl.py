@@ -250,8 +250,7 @@ def e7ArticleCrawl(new_article_id):
         try:
             print(123123)
             res = json.loads(artic_response.text)['context']
-            all_articl_response.append(
-                res['content'] + f'\n本文详细地址\nhttp://page.onstove.com/epicseven/tw/board/list/e7tw001/view/{card_id}')
+            all_articl_response.append(res['content'])
             all_articl_title.append(res['title'])
             print(f'{card_id}解析结束,休息10秒')
             # time.sleep(10)
@@ -287,7 +286,8 @@ def new_article(E7news_set):
         return new_artic_id, all_article_title, all_article
     return None
 
-#解析最新文章
+
+# 解析最新文章
 def re_news(article_id_list, local_article_id):
     article_id_list.sort(reverse=True)
     article_id_list = article_id_list[:10]
@@ -297,7 +297,7 @@ def re_news(article_id_list, local_article_id):
         all_article_title, all_article_list = e7ArticleCrawl(new_artic_id)
         all_article = []
         for i in all_article_list:
-            b = re.sub('</tr>|■', '\n', i)
+            b = re.sub('</tr>|■|。|;|；', '\n', i)
             c = re.sub('</td>|&nbsp', '\t', b)
             d = re.sub('<.*?>', '', c)
             all_article.append(d)
@@ -314,7 +314,8 @@ def zip_article(article_id_list, all_article_title, all_article):
     for i in complete:
         now = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai'))
         e7_news.append({'article_id': i[0], 'article_title': i[1], 'article': i[2],
-                        'up_time': now.strftime('%m-%d %H:%M')})
+                        'up_time': now.strftime('%m-%d %H:%M'),
+                        'url': f'http://page.onstove.com/epicseven/tw/main/view/{i[0]}'})
     print('整理结束')
     return e7_news
 

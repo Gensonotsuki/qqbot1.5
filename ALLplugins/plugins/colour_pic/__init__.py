@@ -104,7 +104,7 @@ async def sefan(session: CommandSession):
     curPath = os.path.abspath(os.path.dirname(__file__))
     rootPath = curPath[:curPath.find("qqbot/") + len("qqbot/")]
     # rootPath = curPath[:curPath.find("qqbot\\") + len("qqbot\\")]
-    recive_pic = os.path.abspath(rootPath + f'/img/{pic_name}.png')
+    recive_pic = os.path.abspath(rootPath + f'/img/{pic_name}.gif')
     # recive_pic = os.path.abspath(rootPath + f'\\img\\{pic_name}.png')
     save_setu = os.path.abspath(f'/home/coolq-data/data/image/{pic_name}Source.png')
 
