@@ -1,5 +1,7 @@
 #!/home/qbprjENV/bin/python
 import pymongo
+from sqlalchemy import create_engine, MetaData, Table
+from sqlalchemy.orm import sessionmaker
 
 
 def link_local_mongo(host='127.0.0.1', port=27017):
@@ -7,12 +9,20 @@ def link_local_mongo(host='127.0.0.1', port=27017):
     return connectionObject
 
 
-def link_external_mongo(host, port):
-    return
+def linksqlengine():
+    engine = create_engine('mysql+pymysql://root:WOrinima@47.106.154.216/e7db')
+    session = sessionmaker(bind=engine, autocommit=True, autoflush=False)()
+    return session
 
 
-def xxx(self):
-    return
+def savesth(sth):
+    engine = create_engine('mysql+pymysql://root:WOrinima@47.106.154.216/e7db')
+    meta = MetaData(engine)
+    conn = engine.connect()
+    savenikename = Table('nicename', meta, autoload=True)
+    savenikename_insert = savenikename.insert()
+    conn.execute(savenikename_insert, sth)
+    return True
 
 
 def xxxx(self):

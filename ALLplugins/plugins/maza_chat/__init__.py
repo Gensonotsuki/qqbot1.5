@@ -7,30 +7,40 @@ import numpy as np
 import os
 import json
 
+from DataBaseLinkStart import linksqlengine, savesth
 from config import GROUP_LIST
+from ALLplugins.plugins.catalyst.model import Hero, Nicename
 from .data_source import get_chater
 
 __plugin_name__ = '迷宫聊天查询器，输入‘qb 迷宫聊天'
 
+# 获取根路径
 curPath = os.path.abspath(os.path.dirname(__file__))
-rootPath = curPath[:curPath.find("qqbot/") + len("qqbot/")]
+rootPath = curPath[:curPath.find("qqbot\\") + len("qqbot\\")]
 
-nickname = os.path.abspath(rootPath + '/nickname.json')
+# 获取英雄名json文件路径和文件
+nickname = os.path.abspath(rootPath + '\\nickname.json')
 e7_hero_decode = json.load(open(nickname, 'r'))
 
-chat_decode = os.path.abspath(rootPath + '/chat_decode.json')
+# 获取迷宫聊天选项翻译文件
+chat_decode = os.path.abspath(rootPath + '\\chat_decode.json')
 e7_chat_decode = json.load(open(chat_decode, 'r'))
 
-migongdate = os.path.abspath(rootPath + '/e7migongdate.xlsx')
-
+# 获取迷宫聊天数据路径与文件
+migongdate = os.path.abspath(rootPath + '\\e7migongdate.xlsx')
 chat_list = pd.read_excel(migongdate)
+
+dbsession = linksqlengine()
+
+
+# 从db中获取英雄名
 
 
 @on_command('maza_chater', aliases=('迷宫聊天'), only_to_me=False)
 async def maza_chater(session: CommandSession):
     user = session.ctx['user_id']
     hero_list = session.ctx['message'][0].data['text'].split(' ')[1:]
-    userid=session.ctx['user_id']
+
     ker = ''.join(hero_list)
     er_wd = [
         f'{ker}中的一个或多个未找到[CQ:face,id=106]\n请将他们的名字写正确哦[CQ:face,id=6]\n或输入q中断当前查询并通过\t添加外号 已有英雄外号如:木飞 该英雄新的外号如:木飞剑\t进行添加操作',
@@ -39,10 +49,10 @@ async def maza_chater(session: CommandSession):
         rs = await get_unser(hero_list)
         if rs in er_wd:
             session.pause(f'[CQ:at,qq={user}]\n{rs}')
-        await session.send(f'[CQ:at,qq={user}]\n'+rs)
+        await session.send(f'[CQ:at,qq={user}]\n' + rs)
     else:
         chat_menber = session.get('chat_menber', prompt='没有找到4个人,请单独列出想要聊天的4个人[CQ:face,id=13]')
-        await session.send(f'[CQ:at,qq={userid}]\n'+chat_menber)
+        await session.send(f'[CQ:at,qq={user}]\n' + chat_menber)
 
 
 @maza_chater.args_parser
@@ -75,18 +85,17 @@ async def _(session: CommandSession):
 
 async def get_unser(chat_menber) -> str:
     global chat_list, e7_chat_decode, e7_hero_decode
-    # hero_list = chat_menber.split()
     Hero1, Hero2, Hero3, Hero4 = chat_menber
     try:
-        Hero1_en = e7_hero_decode[Hero1]
-        Hero2_en = e7_hero_decode[Hero2]
-        Hero3_en = e7_hero_decode[Hero3]
-        Hero4_en = e7_hero_decode[Hero4]
-    except KeyError:
+        Hero1_en = dbsession.query(Hero).join(Nicename).filter(Nicename.nicename == Hero1).one().heroname
+        Hero2_en = dbsession.query(Hero).join(Nicename).filter(Nicename.nicename == Hero2).one().heroname
+        Hero3_en = dbsession.query(Hero).join(Nicename).filter(Nicename.nicename == Hero3).one().heroname
+        Hero4_en = dbsession.query(Hero).join(Nicename).filter(Nicename.nicename == Hero4).one().heroname
+    except:
         ker = ''.join(chat_menber)
         return f'{ker}中的一个或多个未找到[CQ:face,id=106]\n请将他们的名字写正确哦[CQ:face,id=6]\n或通过\t添加外号 已有英雄外号如:木飞 该英雄新的外号如:木飞剑\t进行添加操作'
-    check_repeat = [Hero1_en, Hero2_en, Hero3_en, Hero4_en]
 
+    check_repeat = [Hero1_en, Hero2_en, Hero3_en, Hero4_en]
     if len(set(check_repeat)) != 4:
         return '有重复的英雄呢[CQ:face,id=104]\n请输出正确的四名英雄'
 
@@ -98,7 +107,6 @@ async def get_unser(chat_menber) -> str:
         hero_chat.append(i)
     creatVar = locals()
     k = {}
-    print(hero_chat)
     for i in hero_chat:
         try:
             h1 = i[2] + '_' + str(i[0]).replace(' ', '')
@@ -117,12 +125,18 @@ async def get_unser(chat_menber) -> str:
     for i in chat_res:
         chater, choice = i[1].split('_')
         if choice != mood:
-            for j in filter(lambda x: chater == x[1], e7_hero_decode.items()):
-
-                if j[0] in chat_menber and times != 2:
-                    total += i[0]
-                    best_chater.append(f'<{j[0]}>的<{e7_chat_decode[choice]}>让大家的疲劳值恢复了{i[0]}点')
-                    times += 1
+            # 通过英文名得到中文名
+            cnname = dbsession.query(Nicename).join(Hero).filter(Hero.heroname == chater).one().nicename
+            # for j in filter(lambda x: chater == x[1], e7_hero_decode.items()):
+            #     print(77777777777777, j)
+            #     if j[0] in chat_menber and times != 2:
+            #         total += i[0]
+            #         best_chater.append(f'<{j[0]}>的<{e7_chat_decode[choice]}>让大家的疲劳值恢复了{i[0]}点')
+            #         times += 1
+            if cnname in chat_menber and times != 2:
+                total += i[0]
+                best_chater.append(f'<{cnname}>的<{e7_chat_decode[choice]}>让大家的疲劳值恢复了{i[0]}点')
+                times += 1
         mood = choice
     best_chater.append(f'共增加大家{total}点疲劳值')
 
@@ -144,17 +158,31 @@ async def _(session: NLPSession):
     res = None
     msg_box = session.msg.strip().split()
     if msg_box[0] == '添加外号':
-        e7_hero_decode[msg_box[2]] = e7_hero_decode[msg_box[1]]
-        res = NLPResult(100, 'add_nicname', {'message': '外号添加成功'})
-        json.dump(e7_hero_decode, open(nickname, 'w'))
-        return res
+        # 得到英雄id
+        Hero_id = dbsession.query(Hero).join(Nicename).filter(Nicename.nicename == msg_box[1]).one().id
+        # 构造插入语句
+        insert = {'hero_id': Hero_id, 'nicename': msg_box[2], 'delete': 1}
+        try:
+            rs = savesth(insert)
+            if rs:
+                # e7_hero_decode[msg_box[2]] = e7_hero_decode[msg_box[1]]
+                res = NLPResult(100, 'add_nicname', {'message': '外号添加成功'})
+                # json.dump(e7_hero_decode, open(nickname, 'w'))
+                return res
+            res = NLPResult(100, 'add_nicname', {'message': '外号添加超时'})
+            return res
+        except:
+            res = NLPResult(100, 'add_nicname', {'message': '外号添加超时'})
+            return res
+
     if msg_box[0] == '查看外号':
-        res = e7_hero_decode[msg_box[1]]
-        nickname_list = []
-        for j in filter(lambda x: res == x[1], e7_hero_decode.items()):
-            nickname_list.append(j[0])
-        res = NLPResult(100, 'check_nicname', {'message': res + '：' + '，'.join(nickname_list)})
-        return res
+        try:
+            hero_obj = dbsession.query(Hero).join(Nicename).filter(Nicename.nicename == msg_box[1]).one()
+            res = NLPResult(100, 'check_nicname', {'message': hero_obj.heroname + f'：{hero_obj.nicename}'})
+            return res
+        except:
+            res = NLPResult(100, 'check_nicname', {'message': '查询超时,请重试'})
+            return res
 
 
 @on_command('add_nicname', only_to_me=False)
