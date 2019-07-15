@@ -18,7 +18,7 @@ e7MDB = link_local_mongo()
 async def _():
     global bot
     try:
-        await bot.send_group_msg(group_id=615086637,
+        await bot.send_group_msg(group_id='',
                                  message='现在晚上11点20分，[CQ:at,qq=309787171]赶快去配置团战[CQ:emoji,id=128522][CQ:emoji,id=128522][CQ:emoji,id=128522]')
     except CQHttpError:
         pass
@@ -42,7 +42,7 @@ async def _():
         new_article_title = set(bbs_article_title) - set(local_news_title)
         if new_article_title:
             try:
-                await bot.send_group_msg(group_id=615086637,
+                await bot.send_group_msg(group_id='',
                                      message='论坛有最新公告哟~请使用‘qb 公告’进行查询\n' + '\n'.join(new_article_title))
                 saveE7news(latest_news)
             except CQHttpError:
@@ -69,7 +69,7 @@ async def _():
         new_article_title = set(bbs_article_title) - set(local_news_title)
         print(local_news_title)
         try:
-            await bot.send_group_msg(group_id=615086637,
+            await bot.send_group_msg(group_id='',
                                      message='论坛有最新公告哟~请使用‘qb 公告’进行查询\n' + '\n'.join(new_article_title))
 
         except CQHttpError:

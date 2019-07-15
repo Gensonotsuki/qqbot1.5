@@ -3,7 +3,7 @@ import re
 from datetime import timedelta
 from nonebot.default_config import *
 
-SUPERUSERS = {1105569635}
+SUPERUSERS = {}
 HOST = '0.0.0.0'
 PORT = 8080
 NICKNAME = ['qb']
@@ -12,4 +12,4 @@ DEBUG = True
 SESSION_RUN_TIMEOUT = timedelta(seconds=10)
 DEFAULT_VALIDATION_FAILURE_EXPRESSION = '指令格式有误，请检查'
 
-GROUP_LIST = [704508525, 144126250, 615086637]
+GROUP_LIST = []
