@@ -193,11 +193,8 @@ def e7_mainpage_crawl():
         print('首页文章获取结束')
         article_id_list = []
         for article_id in artic_list:
-            print('123')
-
             if article_id['user']['nickname'] == '卡卡小編':
                 article_id_list.append(article_id['card_no'])
-            print('456')
         article_id_list.sort(reverse=True)
         article_id_list = article_id_list[:10]
         return article_id_list
@@ -250,7 +247,7 @@ def e7ArticleCrawl(new_article_id):
         artic_data['card_no'] = card_id
         artic_response = requests.post(url=artic_url, data=json.dumps(artic_data), headers=artic_head)
         try:
-            print(123123)
+
             res = json.loads(artic_response.text)['context']
             all_articl_response.append(res['content'])
             all_articl_title.append(res['title'])

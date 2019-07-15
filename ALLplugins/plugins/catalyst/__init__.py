@@ -41,19 +41,18 @@ async def _(session: CommandSession):
 # 通过催化剂名查英雄列表和对应商店
 async def hero_shop(sth):
     try:
-        herolist = dbsession.query(Nicename.nicename).join(Hero).join(hero_constellations).join(Constellation).join(
+        herolist = dbsession.query(Hero).join(hero_constellations).join(Constellation).join(
             constellation_catalyst).join(Catalyst).filter(Catalyst.catalyst == sth).all()
 
         shoplist = dbsession.query(Shop).join(catalyst_shop).join(Catalyst).filter(Catalyst.catalyst == sth).all()
     except:
         return '查询超时,请稍后重试'
-    if herolist and shoplist:
-        wd = ''
-
-        for heroname in herolist:
-            wd += heroname.nicename + '，'
-
-        rs = f'{wd[:-1]}\n以上英雄需求{sth}\n分别在↓↓↓\n{shoplist}\t有售\n或通过3级炼金塔炼制而成'
+    cnname_list = []
+    for enname in herolist:
+        cnname = dbsession.query(Nicename).join(Hero).filter(Hero.heroname == enname.heroname).first()
+        cnname_list.append(cnname)
+    if cnname_list and shoplist:
+        rs = f'{cnname_list}\n以上英雄需求{sth}\n分别在↓↓↓\n{shoplist}\t有售\n或通过3级炼金塔炼制而成'
         return rs
     return f'没有催化剂---{sth}---请检查，以下为催化剂列表\n{allcatalyst}'
 

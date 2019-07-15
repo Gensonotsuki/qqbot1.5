@@ -16,24 +16,25 @@ __plugin_name__ = '迷宫聊天查询器，输入‘qb 迷宫聊天'
 
 # 获取根路径
 curPath = os.path.abspath(os.path.dirname(__file__))
-rootPath = curPath[:curPath.find("qqbot\\") + len("qqbot\\")]
+# rootPath = curPath[:curPath.find("qqbot\\") + len("qqbot\\")]
+rootPath = curPath[:curPath.find("qqbot/") + len("qqbot/")]
 
 # 获取英雄名json文件路径和文件
-nickname = os.path.abspath(rootPath + '\\nickname.json')
+# nickname = os.path.abspath(rootPath + '\\nickname.json')
+nickname = os.path.abspath(rootPath + '/nickname.json')
 e7_hero_decode = json.load(open(nickname, 'r'))
 
 # 获取迷宫聊天选项翻译文件
-chat_decode = os.path.abspath(rootPath + '\\chat_decode.json')
+# chat_decode = os.path.abspath(rootPath + '\\chat_decode.json')
+chat_decode = os.path.abspath(rootPath + '/chat_decode.json')
 e7_chat_decode = json.load(open(chat_decode, 'r'))
 
 # 获取迷宫聊天数据路径与文件
-migongdate = os.path.abspath(rootPath + '\\e7migongdate.xlsx')
+# migongdate = os.path.abspath(rootPath + '\\e7migongdate.xlsx')
+migongdate = os.path.abspath(rootPath + '/e7migongdate.xlsx')
 chat_list = pd.read_excel(migongdate)
 
 dbsession = linksqlengine()
-
-
-# 从db中获取英雄名
 
 
 @on_command('maza_chater', aliases=('迷宫聊天'), only_to_me=False)
@@ -126,16 +127,20 @@ async def get_unser(chat_menber) -> str:
         chater, choice = i[1].split('_')
         if choice != mood:
             # 通过英文名得到中文名
-            cnname = dbsession.query(Nicename).join(Hero).filter(Hero.heroname == chater).one().nicename
+            cnchater = ''
+            cnnamelist = dbsession.query(Nicename).join(Hero).filter(Hero.heroname == chater).all()
+            for cnname in cnnamelist:
+                if cnname.nicename in chat_menber:
+                    cnchater = cnname.nicename
             # for j in filter(lambda x: chater == x[1], e7_hero_decode.items()):
             #     print(77777777777777, j)
             #     if j[0] in chat_menber and times != 2:
             #         total += i[0]
             #         best_chater.append(f'<{j[0]}>的<{e7_chat_decode[choice]}>让大家的疲劳值恢复了{i[0]}点')
             #         times += 1
-            if cnname in chat_menber and times != 2:
+            if cnchater in chat_menber and times != 2:
                 total += i[0]
-                best_chater.append(f'<{cnname}>的<{e7_chat_decode[choice]}>让大家的疲劳值恢复了{i[0]}点')
+                best_chater.append(f'<{cnchater}>的<{e7_chat_decode[choice]}>让大家的疲劳值恢复了{i[0]}点')
                 times += 1
         mood = choice
     best_chater.append(f'共增加大家{total}点疲劳值')
@@ -181,7 +186,7 @@ async def _(session: NLPSession):
             res = NLPResult(100, 'check_nicname', {'message': hero_obj.heroname + f'：{hero_obj.nicename}'})
             return res
         except:
-            res = NLPResult(100, 'check_nicname', {'message': '查询超时,请重试'})
+            res = NLPResult(100, 'check_nicname', {'message': '没有这个人或者查询超时,请重试'})
             return res
 
 
