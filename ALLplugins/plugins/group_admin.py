@@ -51,13 +51,13 @@ async def _(session: CommandSession):
     except:
         ban_time = 60
     if sender_rank in ['owner', 'admin']:
-        await bot.set_group_ban(group_id=745494370, user_id=someone, duration=ban_time)
-        await bot.send_group_msg(group_id=745494370, message=f'根据{sender_id}的要求\n{someone}被赐予口球,并塞了他{ban_time}秒')
+        await bot.set_group_ban(group_id=787941515, user_id=someone, duration=ban_time)
+        await bot.send_group_msg(group_id=787941515, message=f'根据{sender_id}的要求\n{someone}被赐予口球,并塞了他{ban_time}秒')
         return
     sender_list.append(sender_id)
     if len(set(sender_list)) >= 3:
-        await bot.set_group_ban(group_id=745494370, user_id=someone, duration=ban_time)
-        await bot.send_group_msg(group_id=745494370, message=f'应广大人民的的恳求\n{someone}被赐予口球,并塞了他{ban_time}秒')
+        await bot.set_group_ban(group_id=787941515, user_id=someone, duration=ban_time)
+        await bot.send_group_msg(group_id=787941515, message=f'应广大人民的的恳求\n{someone}被赐予口球,并塞了他{ban_time}秒')
         return
 
 
