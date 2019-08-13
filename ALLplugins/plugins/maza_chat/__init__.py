@@ -136,8 +136,8 @@ async def get_unser(chat_menber):
         try:
             for hero in set(re.findall(r"([a-z]*?)_", str(compile_wd), re.I)):
                 compile_wd = re.compile(hero).sub(
-                    dbsession.query(Nicename).join(Hero).filter(Hero.heroname == hero).all()[0].nicename,
-                    str(compile_wd))
+                dbsession.query(Nicename).join(Hero).filter(Hero.heroname == hero).all()[0].nicename,
+                str(compile_wd))
             send_wd = [f'''<{i[0][1].split("_")[0]}>---<{i[0][1].split("_")[1]}>
                 <{i[0][0][1][0][0]}>\t<{i[0][0][1][0][1]}>
                 <{i[0][0][1][1][0]}>\t<{i[0][0][1][1][1]}>
@@ -151,7 +151,7 @@ async def get_unser(chat_menber):
                 总共<提升>---<{i[2]}>
                 ''' for i in eval(compile_wd)]
         except:
-            # send_wd=''
+        # send_wd=''
             send_wd = [f'''<{i[0][1].split("_")[0]}>---<{i[0][1].split("_")[1]}>
     <{i[0][0][1][0][0]}>\t<{i[0][0][1][0][1]}>
     <{i[0][0][1][1][0]}>\t<{i[0][0][1][1][1]}>
@@ -193,22 +193,24 @@ async def get_unser(chat_menber):
             compile_wd = re.compile(choice).sub(e7_chat_decode[choice], compile_wd)
         res = eval(compile_wd)
         send_wd = f'''<{res[0][1].split("_")[0]}>---<{res[0][1].split("_")[1]}>
-    <{res[0][0][1][0][0]}>\t<{abs(res[0][0][1][0][1])}>{"↑" if res[0][0][1][0][1] >= 0 else "↓"}
-    <{res[0][0][1][1][0]}>\t<{abs(res[0][0][1][1][1])}>{"↑" if res[0][0][1][1][1] >= 0 else "↓"}
-    <{res[0][0][1][2][0]}>\t<{abs(res[0][0][1][2][1])}>{"↑" if res[0][0][1][2][1] >= 0 else "↓"}
-                        合计--{abs(res[0][0][0])}{"↑" if res[0][0][0] >= 0 else "↓"}
+    <{res[0][0][1][0][0]}>\t<{abs(res[0][0][1][0][1])}>{"↑" if res[0][0][1][0][1]>=0 else "↓"}
+    <{res[0][0][1][1][0]}>\t<{abs(res[0][0][1][1][1])}>{"↑" if res[0][0][1][1][1]>=0 else "↓"}
+    <{res[0][0][1][2][0]}>\t<{abs(res[0][0][1][2][1])}>{"↑" if res[0][0][1][2][1]>=0 else "↓"}
+                        合计--{abs(res[0][0][0])}{"↑" if res[0][0][0]>=0 else "↓"}
     <{res[1][1].split("_")[0]}---{res[1][1].split("_")[1]}>
-    <{res[1][0][1][0][0]}>\t<{abs(res[1][0][1][0][1])}>{"↑" if res[1][0][1][0][1] >= 0 else "↓"}
-    <{res[1][0][1][1][0]}>\t<{abs(res[1][0][1][1][1])}>{"↑" if res[1][0][1][1][1] >= 0 else "↓"}
-    <{res[1][0][1][2][0]}>\t<{abs(res[1][0][1][2][1])}>{"↑" if res[1][0][1][2][1] >= 0 else "↓"}
-                        合计--{abs(res[1][0][0])}{"↑" if res[1][0][0] >= 0 else "↓"}
-    总共---{"提升了" if res[2] >= 0 else "降低了"}<{abs(res[2])}>点疲劳值
+    <{res[1][0][1][0][0]}>\t<{abs(res[1][0][1][0][1])}>{"↑" if res[1][0][1][0][1]>=0 else "↓"}
+    <{res[1][0][1][1][0]}>\t<{abs(res[1][0][1][1][1])}>{"↑" if res[1][0][1][1][1]>=0 else "↓"}
+    <{res[1][0][1][2][0]}>\t<{abs(res[1][0][1][2][1])}>{"↑" if res[1][0][1][2][1]>=0 else "↓"}
+                        合计--{abs(res[1][0][0])}{"↑" if res[1][0][0]>=0 else "↓"}
+    总共---{"提升了" if res[2] >=0 else "降低了"}<{abs(res[2])}>点疲劳值
     '''
-
+       
         return send_wd
+       
 
 
 async def calculation(newpick, chat_menber):
+    
     hero_chat = np.array(newpick.iloc[:, :3]).tolist()
     creatVar = locals()
     k = {}
@@ -220,7 +222,7 @@ async def calculation(newpick, chat_menber):
             return f'{i[2]}他还不会聊天呢'
         creatVar[h1] = newpick[~newpick['Hero'].isin([i[2]])][i[0]]
         creatVar[h2] = newpick[~newpick['Hero'].isin([i[2]])][i[1]]
-
+  
         k[h1] = [sum(creatVar.get(h1)),
                  np.array(newpick.loc[creatVar.get(h1).to_frame().index.tolist(),
                                       ['Hero', i[0]]]).tolist()]
@@ -238,12 +240,13 @@ async def calculation(newpick, chat_menber):
         chater, choice = i[1].split('_')
         # other_chater = i[0][1][0][0], i[0][1][1][0], i[0][1][2][0]
         if choice != mood and times != 2:
+          
             total += i[0][0]
             best_chater.append(
                 i)
             times += 1
         mood = choice
-
+   
     best_chater.append(total)
     return best_chater
 

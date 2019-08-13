@@ -3,6 +3,7 @@ from random import randint
 from nonebot import on_natural_language, NLPSession, NLPResult
 from nonebot import on_command, CommandSession
 
+from config import GROUP_LIST
 from .data_source import send_repeate
 
 __plugin_name__ = '复读机模式'
@@ -11,13 +12,13 @@ _repeate_wd = ''
 repeat_box = []
 repeat_time = randint(1, 2)
 
-group_list = [704508525, 144126250, 615086637]
+
 
 
 # 自然语言处理器
 @on_natural_language(only_to_me=False)
 async def _(session: NLPSession):
-    if session.ctx.get('group_id') not in group_list:
+    if session.ctx.get('group_id') not in GROUP_LIST:
         return None
     global _last_session, _repeate_wd, repeat_box, repeat_time
     result = None

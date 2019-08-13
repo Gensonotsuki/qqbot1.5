@@ -8,18 +8,19 @@ from aiocqhttp.exceptions import Error as CQHttpError
 from ALLplugins.plugins.ep7crawl import push_article, saveE7news
 from DataBaseLinkStart import link_local_mongo
 
-__plugin_name__ = '会战前一天晚上进行配置提醒\n自动转发论坛'
+__plugin_name__ = '每日提醒网页蚊子腿\n自动转发论坛'
 bot = nonebot.get_bot()
 e7MDB = link_local_mongo()
 
 
 # 每周2,4,星期天晚上11点半提醒团战配置
-@nonebot.scheduler.scheduled_job('cron', day_of_week='1,3,6', hour=23, minute=20, jitter=30, timezone='Asia/Shanghai')
+@nonebot.scheduler.scheduled_job('cron', day_of_week='*', hour='10,22', minute=20, jitter=30, timezone='Asia/Shanghai')
 async def _():
     global bot
     try:
-        await bot.send_group_msg(group_id='',
-                                 message='现在晚上11点20分，[CQ:at,qq=309787171]赶快去配置团战[CQ:emoji,id=128522][CQ:emoji,id=128522][CQ:emoji,id=128522]')
+        now = datetime.now().strftime('%H:%M')
+        await bot.send_group_msg(group_id=787941515,
+                                 message=f'现在的时间是{now}\n我是本群网页蚊子腿领取提醒助\n蚊子腿虽小,可不要忘记了哦[CQ:emoji,id=128522][CQ:emoji,id=128522][CQ:emoji,id=128522]')
     except CQHttpError:
         pass
 
@@ -42,8 +43,8 @@ async def _():
         new_article_title = set(bbs_article_title) - set(local_news_title)
         if new_article_title:
             try:
-                await bot.send_group_msg(group_id='',
-                                     message='论坛有最新公告哟~请使用‘qb 公告’进行查询\n' + '\n'.join(new_article_title))
+                await bot.send_group_msg(group_id=787941515,
+                                         message='论坛有最新公告哟~请使用‘qb 公告’进行查询\n' + '\n'.join(new_article_title))
                 saveE7news(latest_news)
             except CQHttpError:
                 pass
@@ -69,7 +70,7 @@ async def _():
         new_article_title = set(bbs_article_title) - set(local_news_title)
         print(local_news_title)
         try:
-            await bot.send_group_msg(group_id='',
+            await bot.send_group_msg(group_id=787941515,
                                      message='论坛有最新公告哟~请使用‘qb 公告’进行查询\n' + '\n'.join(new_article_title))
 
         except CQHttpError:

@@ -32,7 +32,7 @@ async def setu(session: CommandSession):
 # 保存图片,搜索图片,发送图片
 async def tool_man2(session, se_pic, recive_pic, save_setu, user, pic_name):
     await save_pic(se_pic, recive_pic)
-    await session.send('[CQ:emoji,id=128013]图已收到,该过程较长,请耐心等待')
+    await session.send('[CQ:emoji,id=128013]图已收到,该过程较长,请耐心等待\n搜索过程中的其他命令将会在搜索完毕后执行')
     # await search_anime(recive_pic, save_path)
     c = await search_pic(recive_pic, save_setu)
     if c:
@@ -112,14 +112,14 @@ async def sefan(session: CommandSession):
         cq_pic = session.ctx['message'][1].data['url']
         await tool_man(session, cq_pic, recive_pic, save_setu, user, pic_name)
     except:
-        se_pic = session.get('pic', prompt='请发送[CQ:emoji,id=128013]番')
+        se_pic = session.get('pic', prompt='[CQ:at,qq={user}]\n请发送[CQ:emoji,id=128013]番')
         await tool_man(session, se_pic[0], recive_pic, save_setu, user, pic_name)
 
 
 # 保存图片,搜索图片,发送图片
 async def tool_man(session, se_pic, recive_pic, save_setu, user, pic_name):
     await save_pic(se_pic, recive_pic)
-    await session.send('[CQ:emoji,id=128013]番已收到,该过程较长,请耐心等待(低帧gif会等待3-5分钟')
+    await session.send('[CQ:emoji,id=128013]番已收到,该过程较长,请耐心等待(低帧gif会等待3-5分钟)\n搜索过程中的其他命令将会在搜索完毕后执行')
     # await search_anime(recive_pic, save_path)
     c = await search_anime(recive_pic, save_setu)
     if c:
@@ -136,7 +136,7 @@ async def _(session: CommandSession):
             session.state['pic'] = cq_pic
         return
     if not cq_pic:
-        session.pause('[CQ:emoji,id=128013]番没有收到呢')
+        session.pause('[CQ:at,qq={user}]\n[CQ:emoji,id=128013]番没有收到呢')
     session.state[session.current_key] = cq_pic
 
 
