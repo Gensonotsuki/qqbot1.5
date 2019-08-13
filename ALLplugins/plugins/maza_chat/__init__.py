@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import os
 import json
+import re
 
 from DataBaseLinkStart import linksqlengine, savesth
 from config import GROUP_LIST
@@ -30,9 +31,10 @@ chat_decode = os.path.abspath(rootPath + '/chat_decode.json')
 e7_chat_decode = json.load(open(chat_decode, 'r'))
 
 # 获取迷宫聊天数据路径与文件
+
 # migongdate = os.path.abspath(rootPath + '\\e7migongdate.xlsx')
 migongdate = os.path.abspath(rootPath + '/e7migongdate.xlsx')
-chat_list = pd.read_excel(migongdate)
+chat_list = pd.read_excel(migongdate, sheet_name='Sheet2')
 
 dbsession = linksqlengine()
 
@@ -41,18 +43,24 @@ dbsession = linksqlengine()
 async def maza_chater(session: CommandSession):
     user = session.ctx['user_id']
     hero_list = session.ctx['message'][0].data['text'].split(' ')[1:]
-
     ker = ''.join(hero_list)
     er_wd = [
-        f'{ker}中的一个或多个未找到[CQ:face,id=106]\n请将他们的名字写正确哦[CQ:face,id=6]\n或输入q中断当前查询并通过\t添加外号 已有英雄外号如:木飞 该英雄新的外号如:木飞剑\t进行添加操作',
+        f'[CQ:face,id=6]\n查询超时或\n{ker}中的一个或多个未找到[CQ:face,id=106]\n请将他们的名字写正确哦[CQ:face,id=6]\n或输入q中断当前查询并通过\t添加外号 已有英雄外号如:木飞 该英雄新的外号如:木飞剑\t进行添加操作',
         '有重复的英雄呢[CQ:face,id=104]\n请输出正确的四名英雄']
-    if hero_list and len(hero_list) == 4:
+    if hero_list and len(hero_list) >= 3:
         rs = await get_unser(hero_list)
+        if len(rs) != 1:
+            if type(rs) != str:
+                for i in rs:
+                    await session.send(f'[CQ:at,qq={user}]\n' + i)
+                await session.send(f'[CQ:at,qq={user}]\n' + rs)
+
         if rs in er_wd:
             session.pause(f'[CQ:at,qq={user}]\n{rs}')
         await session.send(f'[CQ:at,qq={user}]\n' + rs)
+
     else:
-        chat_menber = session.get('chat_menber', prompt='没有找到4个人,请单独列出想要聊天的4个人[CQ:face,id=13]')
+        chat_menber = session.get('chat_menber', prompt='[CQ:face,id=6]\n没有找到4个人,请单独列出想要聊天的4个人[CQ:face,id=13]')
         await session.send(f'[CQ:at,qq={user}]\n' + chat_menber)
 
 
@@ -66,17 +74,17 @@ async def _(session: CommandSession):
     stripped_arg = cat.strip().split()
     ker = ''.join(stripped_arg)
     er_wd = [
-        f'{ker}中的一个或多个未找到[CQ:face,id=106]\n请将他们的名字写正确哦[CQ:face,id=6]\n或输入q中断当前查询并通过\t添加外号 已有英雄外号如:木飞 该英雄新的外号如:木飞剑\t进行添加操作',
-        '有重复的英雄呢[CQ:face,id=104]\n请输出正确的四名英雄']
+        f'[CQ:face,id=6]\n查询超时或\n{ker}中的一个或多个未找到[CQ:face,id=106]\n请将他们的名字写正确哦[CQ:face,id=6]\n或输入q中断当前查询并通过\t添加外号 已有英雄外号如:木飞 该英雄新的外号如:木飞剑\t进行添加操作',
+        '有重复的英雄呢[CQ:face,id=104]\n请输出正确的3~4名英雄']
     if session.is_first_run:
-        if len(stripped_arg) == 4:
+        if len(stripped_arg) >= 3:
             rs = await get_unser(stripped_arg)
             if rs in er_wd:
                 session.pause(f'{rs}')
             session.state['test'] = rs
         return
-    if len(stripped_arg) != 4:
-        session.pause('似乎没有4个人呢[CQ:face,id=106]\n请用空格将其隔开')
+    if len(stripped_arg) < 3:
+        session.pause('[CQ:face,id=6]\n似乎没有3~4个人呢[CQ:face,id=106]\n请用空格将其隔开')
     rs = await get_unser(stripped_arg)
 
     if rs in er_wd:
@@ -84,28 +92,124 @@ async def _(session: CommandSession):
     session.state[session.current_key] = rs
 
 
-async def get_unser(chat_menber) -> str:
-    global chat_list, e7_chat_decode, e7_hero_decode
-    Hero1, Hero2, Hero3, Hero4 = chat_menber
-    try:
-        Hero1_en = dbsession.query(Hero).join(Nicename).filter(Nicename.nicename == Hero1).one().heroname
-        Hero2_en = dbsession.query(Hero).join(Nicename).filter(Nicename.nicename == Hero2).one().heroname
-        Hero3_en = dbsession.query(Hero).join(Nicename).filter(Nicename.nicename == Hero3).one().heroname
-        Hero4_en = dbsession.query(Hero).join(Nicename).filter(Nicename.nicename == Hero4).one().heroname
-    except:
-        ker = ''.join(chat_menber)
-        return f'{ker}中的一个或多个未找到[CQ:face,id=106]\n请将他们的名字写正确哦[CQ:face,id=6]\n或通过\t添加外号 已有英雄外号如:木飞 该英雄新的外号如:木飞剑\t进行添加操作'
+async def get_unser(chat_menber):
+    global chat_list
+    if len(chat_menber) == 3:
+        Hero1, Hero2, Hero3 = chat_menber
+        try:
+            Hero1_en = dbsession.query(Hero).join(Nicename).filter(Nicename.nicename == Hero1).one().heroname.strip()
+            Hero2_en = dbsession.query(Hero).join(Nicename).filter(Nicename.nicename == Hero2).one().heroname.strip()
+            Hero3_en = dbsession.query(Hero).join(Nicename).filter(Nicename.nicename == Hero3).one().heroname.strip()
+        except:
+            ker = ''.join(chat_menber)
+            return f'{ker}中的一个或多个未找到[CQ:face,id=106]\n请将他们的名字写正确哦[CQ:face,id=6]\n或通过\t添加外号 已有英雄外号如:木飞 该英雄新的外号如:木飞剑\t进行添加操作'
+        check_repeat = [Hero1_en, Hero2_en, Hero3_en]
+        if len(set(check_repeat)) != 3:
+            return '有重复的英雄呢[CQ:face,id=104]\n请输出正确的3名英雄'
+        # 选择所得3个人的df
+        pick_tri = chat_list.loc[
+            (chat_list['Hero'] == Hero1_en)
+            | (chat_list['Hero'] == Hero2_en)
+            | (chat_list['Hero'] == Hero3_en)]
+        # 将所选df的人名改成中文
+        pick_tri['Hero'].replace(check_repeat, chat_menber, inplace=True)
 
-    check_repeat = [Hero1_en, Hero2_en, Hero3_en, Hero4_en]
-    if len(set(check_repeat)) != 4:
-        return '有重复的英雄呢[CQ:face,id=104]\n请输出正确的四名英雄'
+        nopick = chat_list.drop(pick_tri.index)
+        tri_chat = []
+        # 遍历没有被选择的所有人,得到全部组合
+        for nopick_index in nopick.index:
+            newpick = pick_tri.append(chat_list.drop(pick_tri.index).loc[nopick_index])
+            best_chater = await calculation(newpick, chat_menber)
+            tri_chat.append(best_chater)
+        tri_chat.sort(key=lambda x: int(x[2]))
+        tri_chat.reverse()
+        compile_wd = str(tri_chat[:3])
+        # 翻译聊天选项
+        for choice in set([i for i in re.findall(r'_(\w*)', str(compile_wd), flags=re.I)]):
+            compile_wd = re.compile(choice).sub(e7_chat_decode[choice], str(compile_wd))
+        # 翻译非选项旁边的人名
+        for hero in set(re.findall(r"'([a-z]*?)'", str(compile_wd), re.I)):
+            compile_wd = re.compile(hero).sub(
+                dbsession.query(Nicename).join(Hero).filter(Hero.heroname == hero).all()[0].nicename,
+                str(compile_wd))
+        # 翻译聊天选项旁边的人名
+        try:
+            for hero in set(re.findall(r"([a-z]*?)_", str(compile_wd), re.I)):
+                compile_wd = re.compile(hero).sub(
+                    dbsession.query(Nicename).join(Hero).filter(Hero.heroname == hero).all()[0].nicename,
+                    str(compile_wd))
+            send_wd = [f'''<{i[0][1].split("_")[0]}>---<{i[0][1].split("_")[1]}>
+                <{i[0][0][1][0][0]}>\t<{i[0][0][1][0][1]}>
+                <{i[0][0][1][1][0]}>\t<{i[0][0][1][1][1]}>
+                <{i[0][0][1][2][0]}>\t<{i[0][0][1][2][1]}>
+                                    合计--{i[0][0][0]}
+                <{i[1][1].split("_")[0]}---{i[1][1].split("_")[1]}>
+                <{i[1][0][1][0][0]}>\t<{i[1][0][1][0][1]}>
+                <{i[1][0][1][1][0]}>\t<{i[1][0][1][1][1]}>
+                <{i[1][0][1][2][0]}>\t<{i[1][0][1][2][1]}>
+                                    合计--{i[1][0][0]}
+                总共<提升>---<{i[2]}>
+                ''' for i in eval(compile_wd)]
+        except:
+            # send_wd=''
+            send_wd = [f'''<{i[0][1].split("_")[0]}>---<{i[0][1].split("_")[1]}>
+    <{i[0][0][1][0][0]}>\t<{i[0][0][1][0][1]}>
+    <{i[0][0][1][1][0]}>\t<{i[0][0][1][1][1]}>
+    <{i[0][0][1][2][0]}>\t<{i[0][0][1][2][1]}>
+                        合计--{i[0][0][0]}
+    <{i[1][1].split("_")[0]}---{i[1][1].split("_")[1]}>
+    <{i[1][0][1][0][0]}>\t<{i[1][0][1][0][1]}>
+    <{i[1][0][1][1][0]}>\t<{i[1][0][1][1][1]}>
+    <{i[1][0][1][2][0]}>\t<{i[1][0][1][2][1]}>
+                        合计--{i[1][0][0]}
+    总共<提升>---<{i[2]}>
+    ''' for i in eval(compile_wd)]
 
-    pick = chat_list.loc[
-        (chat_list['Hero'] == Hero1_en) | (chat_list['Hero'] == Hero2_en) | (chat_list['Hero'] == Hero3_en) | (
-                chat_list['Hero'] == Hero4_en)]
-    hero_chat = []
-    for i in np.array(pick.iloc[:, :3]).tolist():
-        hero_chat.append(i)
+        return send_wd
+
+    else:
+        Hero1, Hero2, Hero3, Hero4 = chat_menber
+        try:
+            Hero1_en = dbsession.query(Hero).join(Nicename).filter(Nicename.nicename == Hero1).one().heroname.strip()
+            Hero2_en = dbsession.query(Hero).join(Nicename).filter(Nicename.nicename == Hero2).one().heroname.strip()
+            Hero3_en = dbsession.query(Hero).join(Nicename).filter(Nicename.nicename == Hero3).one().heroname.strip()
+            Hero4_en = dbsession.query(Hero).join(Nicename).filter(Nicename.nicename == Hero4).one().heroname.strip()
+        except:
+            ker = ''.join(chat_menber)
+            return f'{ker}中的一个或多个未找到[CQ:face,id=106]\n请将他们的名字写正确哦[CQ:face,id=6]\n或通过\t添加外号 已有英雄外号如:木飞 该英雄新的外号如:木飞剑\t进行添加操作'
+        check_repeat = [Hero1_en, Hero2_en, Hero3_en, Hero4_en]
+        if len(set(check_repeat)) != 4:
+            return '有重复的英雄呢[CQ:face,id=104]\n请输出正确的4名英雄'
+        pick = chat_list.loc[
+            (chat_list['Hero'] == Hero1_en)
+            | (chat_list['Hero'] == Hero2_en)
+            | (chat_list['Hero'] == Hero3_en)
+            | (chat_list['Hero'] == Hero4_en)]
+        # 4个人
+        pick['Hero'].replace(check_repeat, chat_menber, inplace=True)
+        best_chater = await calculation(pick, chat_menber)
+        compile_wd = str(best_chater)
+        for choice in set([i for i in re.findall(r'_(\w*)', compile_wd, flags=re.I)]):
+            compile_wd = re.compile(choice).sub(e7_chat_decode[choice], compile_wd)
+        res = eval(compile_wd)
+        send_wd = f'''<{res[0][1].split("_")[0]}>---<{res[0][1].split("_")[1]}>
+    <{res[0][0][1][0][0]}>\t<{abs(res[0][0][1][0][1])}>{"↑" if res[0][0][1][0][1] >= 0 else "↓"}
+    <{res[0][0][1][1][0]}>\t<{abs(res[0][0][1][1][1])}>{"↑" if res[0][0][1][1][1] >= 0 else "↓"}
+    <{res[0][0][1][2][0]}>\t<{abs(res[0][0][1][2][1])}>{"↑" if res[0][0][1][2][1] >= 0 else "↓"}
+                        合计--{abs(res[0][0][0])}{"↑" if res[0][0][0] >= 0 else "↓"}
+    <{res[1][1].split("_")[0]}---{res[1][1].split("_")[1]}>
+    <{res[1][0][1][0][0]}>\t<{abs(res[1][0][1][0][1])}>{"↑" if res[1][0][1][0][1] >= 0 else "↓"}
+    <{res[1][0][1][1][0]}>\t<{abs(res[1][0][1][1][1])}>{"↑" if res[1][0][1][1][1] >= 0 else "↓"}
+    <{res[1][0][1][2][0]}>\t<{abs(res[1][0][1][2][1])}>{"↑" if res[1][0][1][2][1] >= 0 else "↓"}
+                        合计--{abs(res[1][0][0])}{"↑" if res[1][0][0] >= 0 else "↓"}
+    总共---{"提升了" if res[2] >= 0 else "降低了"}<{abs(res[2])}>点疲劳值
+    '''
+
+        return send_wd
+
+
+async def calculation(newpick, chat_menber):
+    hero_chat = np.array(newpick.iloc[:, :3]).tolist()
     creatVar = locals()
     k = {}
     for i in hero_chat:
@@ -114,39 +218,34 @@ async def get_unser(chat_menber) -> str:
             h2 = i[2] + '_' + str(i[1]).replace(' ', '')
         except:
             return f'{i[2]}他还不会聊天呢'
-        creatVar[h1] = pick[~pick['Hero'].isin([i[2]])][i[0]]
-        creatVar[h2] = pick[~pick['Hero'].isin([i[2]])][i[1]]
-        k[h1] = sum(creatVar.get(h1))
-        k[h2] = sum(creatVar.get(h2))
-    chat_res = sorted(zip(k.values(), k.keys()), reverse=True)
+        creatVar[h1] = newpick[~newpick['Hero'].isin([i[2]])][i[0]]
+        creatVar[h2] = newpick[~newpick['Hero'].isin([i[2]])][i[1]]
+
+        k[h1] = [sum(creatVar.get(h1)),
+                 np.array(newpick.loc[creatVar.get(h1).to_frame().index.tolist(),
+                                      ['Hero', i[0]]]).tolist()]
+        k[h2] = [sum(creatVar.get(h2)),
+                 np.array(newpick.loc[creatVar.get(h2).to_frame().index.tolist(),
+                                      ['Hero', i[1]]]).tolist()]
+    chat_res = sorted(
+        zip(k.values(), k.keys()),
+        reverse=True)
     best_chater = []
     mood = ''
     total = 0
     times = 0
     for i in chat_res:
         chater, choice = i[1].split('_')
-        if choice != mood:
-            # 通过英文名得到中文名
-            cnchater = ''
-            cnnamelist = dbsession.query(Nicename).join(Hero).filter(Hero.heroname == chater).all()
-            for cnname in cnnamelist:
-                if cnname.nicename in chat_menber:
-                    cnchater = cnname.nicename
-            # for j in filter(lambda x: chater == x[1], e7_hero_decode.items()):
-            #     print(77777777777777, j)
-            #     if j[0] in chat_menber and times != 2:
-            #         total += i[0]
-            #         best_chater.append(f'<{j[0]}>的<{e7_chat_decode[choice]}>让大家的疲劳值恢复了{i[0]}点')
-            #         times += 1
-            if cnchater in chat_menber and times != 2:
-                total += i[0]
-                best_chater.append(f'<{cnchater}>的<{e7_chat_decode[choice]}>让大家的疲劳值恢复了{i[0]}点')
-                times += 1
+        # other_chater = i[0][1][0][0], i[0][1][1][0], i[0][1][2][0]
+        if choice != mood and times != 2:
+            total += i[0][0]
+            best_chater.append(
+                i)
+            times += 1
         mood = choice
-    best_chater.append(f'共增加大家{total}点疲劳值')
 
-    best_chater_res = '\n'.join(best_chater[:2])
-    return f'{best_chater_res}\n{best_chater[-1]}'
+    best_chater.append(total)
+    return best_chater
 
 
 @on_natural_language(keywords={'迷宫聊天'})
