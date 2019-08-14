@@ -10,13 +10,13 @@ def link_local_mongo(host='127.0.0.1', port=27017):
 
 
 def linksqlengine():
-    engine = create_engine('mysql+pymysql://root:WOrinima@47.106.154.216/e7db')
+    engine = create_engine('')
     session = sessionmaker(bind=engine, autocommit=True, autoflush=False)()
     return session
 
 
 def savesth(sth):
-    engine = create_engine('mysql+pymysql://root:WOrinima@47.106.154.216/e7db')
+    engine = create_engine('')
     meta = MetaData(engine)
     conn = engine.connect()
     savenikename = Table('nicename', meta, autoload=True)
